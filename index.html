@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniform Payment Checker & Homework Answers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            border-radius: 12px;
+            border: none;
+        }
+
+        .cost-badge {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-4">
+        <div class="text-center my-5">
+            <h2 class="fw-bold text-primary">Payment Checker</h2>
+            <p class="text-muted">School Fees & Uniform Cost Verification System</p>
+        </div>
+
+        <div class="tab-content" id="mainTabContent">
+            <div class="tab-pane fade show active" id="checker" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="card shadow-sm p-4">
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <span class="text-secondary fw-semibold">Fixed Cost:</span>
+                                <span class="badge bg-primary cost-badge" id="fixedCostDisplay">80,000 UGX</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Click to
+                                    Test</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-danger flex-fill btn-sm"
+                                        onclick="runPreset(60000)">
+                                        60,000 UGX
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success flex-fill btn-sm"
+                                        onclick="runPreset(80000)">
+                                        80,000 UGX
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info flex-fill btn-sm"
+                                        onclick="runPreset(100000)">
+                                        100,000 UGX
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form id="paymentForm" onsubmit="event.preventDefault(); processPayment();">
+                                <div class="mb-3">
+                                    <label for="paidAmount" class="form-label fw-semibold">Amount Paid (UGX):</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text fw-bold">UGX</span>
+                                        <input type="number" class="form-control form-control-lg" id="paidAmount"
+                                            placeholder="e.g. 80000" min="0" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 btn-lg fw-semibold">
+                                    <i class="bi bi-search"></i> Check Payment Status
+                                </button>
+                            </form>
+
+                            <!-- Result -->
+                            <div id="resultBox" class="mt-4" style="display: none;"></div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const FIXED_COST = 80000;
+
+        function formatUGX(amount) {
+            return new Intl.NumberFormat('en-UG').format(amount) + ' UGX';
+        }
+
+        function runPreset(amount) {
+            document.getElementById('paidAmount').value = amount;
+            processPayment();
+        }
+
+        function processPayment() {
+            const rawInput = document.getElementById('paidAmount').value;
+            const paidAmount = Number(rawInput);
+            const resultBox = document.getElementById('resultBox');
+
+            if (isNaN(paidAmount) || rawInput === '') {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+          <div class="alert alert-warning border-0 shadow-sm mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Please enter a valid payment amount.
+          </div>`;
+                return;
+            }
+
+            let alertClass = '';
+            let badgeClass = '';
+            let title = '';
+            let message = '';
+
+            // Check the 3 payment outcomes
+            if (paidAmount < FIXED_COST) {
+                // Outcome 1: Underpaid
+                const balance = FIXED_COST - paidAmount;
+                alertClass = 'alert-danger';
+                badgeClass = 'bg-danger';
+                title = 'Underpaid (Balance Due)';
+                message = `
+          <p class="mb-1">Amount Paid: <strong>${formatUGX(paidAmount)}</strong></p>
+          <p class="mb-0">Remaining Balance: <strong class="text-danger fs-5">${formatUGX(balance)}</strong></p>
+          <hr>
+          <small class="text-muted">Please pay the remaining balance to clear your uniform fees.</small>
+        `;
+            } else if (paidAmount === FIXED_COST) {
+                alertClass = 'alert-success';
+                badgeClass = 'bg-success';
+                title = 'Paid in Full';
+                message = `
+          <p class="mb-1">Amount Paid: <strong>${formatUGX(paidAmount)}</strong></p>
+          <p class="mb-0">Balance Due: <strong class="text-success fs-5">0 UGX</strong></p>
+          <hr>
+          <small class="text-muted">Payment complete! Your uniform request is fully processed.</small>
+        `;
+            } else {
+                const excess = paidAmount - FIXED_COST;
+                alertClass = 'alert-info';
+                badgeClass = 'bg-info text-dark';
+                title = 'Overpaid (Excess / Change)';
+                message = `
+          <p class="mb-1">Amount Paid: <strong>${formatUGX(paidAmount)}</strong></p>
+          <p class="mb-0">Excess Amount (Change): <strong class="text-info-emphasis fs-5">${formatUGX(excess)}</strong></p>
+          <hr>
+          <small class="text-muted">You have overpaid. Please claim your change or credit forward.</small>
+        `;
+            }
+
+            // output
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+        <div class="alert ${alertClass} border-0 shadow-sm mb-0">
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge ${badgeClass} me-2">${title}</span>
+          </div>
+          ${message}
+        </div>
+      `;
+        }
+    </script>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
